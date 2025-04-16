@@ -104,7 +104,7 @@ export async function handler(event: CloudFormationCustomResourceEvent): Promise
           );
           for (const igw of page.InternetGateways ?? []) {
             for (const attachment of igw.Attachments ?? []) {
-              if (attachment.State == AttachmentStatus.attached) {
+              if (`${attachment.State}` == 'available') {
                 console.log(`Detaching ${igw.InternetGatewayId}`);
                 await throttlingBackOff(() =>
                   ec2Client.send(
