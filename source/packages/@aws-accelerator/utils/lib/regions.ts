@@ -94,7 +94,7 @@ const regionsInfo: Record<keyof typeof RegionName, RegionInfo> = {
   'il-central-1': { azId: 'ilc1-az', elbAccount: undefined, optIn: true },
   'me-central-1': { azId: 'mec1-az', elbAccount: undefined, optIn: true },
   'me-south-1': { azId: 'mes1-az', elbAccount: '076674570225', optIn: true },
-  'mx-central-1': { azId: 'mex1-az', elbAccount: undefined, optIn: true },
+  'mx-central-1': { azId: 'mxc1-az', elbAccount: undefined, optIn: true },
   'sa-east-1': { azId: 'sae1-az', elbAccount: '507241528517', optIn: false },
   'us-east-1': { azId: 'use1-az', elbAccount: '127311923021', optIn: false },
   'us-east-2': { azId: 'use2-az', elbAccount: '033677994240', optIn: false },
