@@ -242,7 +242,7 @@ export class NfwResources {
           });
 
           firewallPolicy.statefulRuleGroupReferences.forEach((value, key) => {
-            this.stack.addLogs(LogLevel.WARN, `WARN statefulRuleGroupReferences: ${key}, ${value}`);
+            this.stack.addLogs(LogLevel.WARN, `WARN statefulRuleGroupReferences: ${key}, ${JSON.stringify(value)}`);
           });
 
           if (policyItem.shareTargets) {
