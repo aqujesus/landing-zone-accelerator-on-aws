@@ -264,10 +264,11 @@ export class NfwResources {
     ruleGroupReferences: NfwStatefulRuleGroupReferenceConfig[],
     ruleGroupMap: Map<string, string>,
   ): { resourceArn: string; priority?: number }[] {
+    const ruleGroupPrefix = 'managed-rulegroup:';
     const references: { resourceArn: string; priority?: number }[] = [];
 
     for (const reference of ruleGroupReferences) {
-      if (!ruleGroupMap.get(reference.name)) {
+      if (!ruleGroupMap.get(reference.name) && !reference.name.startsWith(ruleGroupPrefix)) {
         this.stack.addLogs(LogLevel.ERROR, `Stateful rule group ${reference.name} not found in rule map`);
         throw new Error(`Configuration validation failed at runtime.`);
       }
