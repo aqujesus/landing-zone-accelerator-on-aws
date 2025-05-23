@@ -293,7 +293,7 @@ export class NfwResources {
     for (const reference of ruleGroupReferences) {
       if (reference.name.startsWith(ruleGroupPrefix)) {
         if (!managedRuleGroupMap.get(reference.name)) {
-          this.stack.addLogs(LogLevel.ERROR, `ERROR prefix: ${ruleGroupPrefix}, ${reference.name}`);
+          this.stack.addLogs(LogLevel.ERROR, `ERROR managed rule: ${managedRuleGroupMap}`);
           this.stack.addLogs(LogLevel.ERROR, `Managed stateful rule group ${reference.name} not found in managed rule map`);
           throw new Error(`Configuration validation failed at runtime.`);
         }
