@@ -251,6 +251,9 @@ export class NfwResources {
         policyMap.set(policyItem.name, policy.policyArn);
       }
     }
+    policyMap.forEach((value, key) => {
+      this.stack.addLogs(LogLevel.WARN, `WARN PolicyMap: ${key}, ${value}`);
+    });
     return policyMap;
   }
 
