@@ -21,6 +21,7 @@ import {
 } from '@aws-accelerator/config';
 import { FirewallPolicyProperty, NetworkFirewallPolicy, NetworkFirewallRuleGroup } from '@aws-accelerator/constructs';
 import { SsmResourceType } from '@aws-accelerator/utils/lib/ssm-parameter-path';
+import * as cdk from 'aws-cdk-lib';
 import fs from 'fs';
 import { pascalCase } from 'pascal-case';
 import path from 'path';
@@ -31,6 +32,7 @@ import { NetworkPrepStack } from './network-prep-stack';
 export class NfwResources {
   public readonly policyMap: Map<string, string>;
   public readonly ruleGroupMap: Map<string, string>;
+  public readonly managedRuleGroupMap: Map<string, string>;
   private stack: NetworkPrepStack;
   constructor(
     networkPrepStack: NetworkPrepStack,
@@ -40,10 +42,16 @@ export class NfwResources {
   ) {
     this.stack = networkPrepStack;
 
+    const { ruleGroupMap, managedRuleGroupMap } = this.createNfwRuleGroups(
+    delegatedAdminAccountId,
+    centralConfig,
+    props
+  );
     // Create NFW rule groups
-    this.ruleGroupMap = this.createNfwRuleGroups(delegatedAdminAccountId, centralConfig, props);
+    this.ruleGroupMap = ruleGroupMap
+    this.managedRuleGroupMap = managedRuleGroupMap
     // Create NFW policies
-    this.policyMap = this.createNfwPolicies(delegatedAdminAccountId, this.ruleGroupMap, centralConfig);
+    this.policyMap = this.createNfwPolicies(delegatedAdminAccountId, this.ruleGroupMap, this.managedRuleGroupMap, centralConfig);
   }
 
   /**
@@ -52,11 +60,12 @@ export class NfwResources {
    * @param ruleItem
    */
   private createNfwRuleGroups(
-    accountId: string,
-    centralConfig: CentralNetworkServicesConfig,
-    props: AcceleratorStackProps,
-  ): Map<string, string> {
-    const ruleGroupMap = new Map<string, string>();
+  accountId: string,
+  centralConfig: CentralNetworkServicesConfig,
+  props: AcceleratorStackProps,
+): { ruleGroupMap: Map<string, string>; managedRuleGroupMap: Map<string, string> } {
+  const ruleGroupMap = new Map<string, string>();
+  const managedRuleGroupMap = new Map<string, string>();
 
     for (const ruleItem of centralConfig.networkFirewall?.rules ?? []) {
       const regions = ruleItem.regions.map(item => {
@@ -80,8 +89,6 @@ export class NfwResources {
             },
           );
         } else {
-          //
-          // Create rule group
           rule = new NetworkFirewallRuleGroup(this.stack, pascalCase(`${ruleItem.name}NetworkFirewallRuleGroup`), {
             capacity: ruleItem.capacity,
             name: ruleItem.name,
@@ -102,11 +109,17 @@ export class NfwResources {
             this.stack.addResourceShare(ruleItem, `${ruleItem.name}_NetworkFirewallRuleGroupShare`, [rule.groupArn]);
           }
         }
+
+      // Check if the rule name starts with "managed-rulegroup:" and add to appropriate map
+      if (ruleItem.name.startsWith('managed-rulegroup:')) {
+        managedRuleGroupMap.set(ruleItem.name, rule.groupArn);
+      } else {
         ruleGroupMap.set(ruleItem.name, rule.groupArn);
       }
     }
-    return ruleGroupMap;
   }
+  return { ruleGroupMap, managedRuleGroupMap };
+}
 
   /**
    * Get rule group rule configuration for a given rule group item
@@ -170,6 +183,7 @@ export class NfwResources {
   private createNfwPolicies(
     accountId: string,
     ruleGroupMap: Map<string, string>,
+    managedRuleGroupMap: Map<string, string>,
     centralConfig: CentralNetworkServicesConfig,
   ): Map<string, string> {
     const policyMap = new Map<string, string>();
@@ -204,7 +218,10 @@ export class NfwResources {
             statefulDefaultActions: policyItem.firewallPolicy.statefulDefaultActions,
             statefulEngineOptions: policyItem.firewallPolicy.statefulEngineOptions,
             statefulRuleGroupReferences: policyItem.firewallPolicy.statefulRuleGroups
-              ? this.getStatefulRuleGroupReferences(policyItem.firewallPolicy.statefulRuleGroups, ruleGroupMap)
+              ? [
+                  ...this.getStatefulRuleGroupReferences(policyItem.firewallPolicy.statefulRuleGroups, ruleGroupMap),
+                  ...this.getStatefulRuleGroupReferencesForManagedPolicies(policyItem.firewallPolicy.statefulRuleGroups, managedRuleGroupMap)
+                ]
               : [],
             statelessCustomActions: policyItem.firewallPolicy.statelessCustomActions,
             statelessRuleGroupReferences: policyItem.firewallPolicy.statelessRuleGroups
@@ -254,6 +271,40 @@ export class NfwResources {
         throw new Error(`Configuration validation failed at runtime.`);
       }
       references.push({ resourceArn: ruleGroupMap.get(reference.name)!, priority: reference.priority });
+    }
+    return references;
+  }
+
+  /**
+   * Return stateful rule group references for managed rule groups
+   * @param ruleGroupReferences
+   * @param managedRuleGroupMap
+   * @returns
+   */
+  private getStatefulRuleGroupReferencesForManagedPolicies(
+    ruleGroupReferences: NfwStatefulRuleGroupReferenceConfig[],
+    managedRuleGroupMap: Map<string, string>,
+  ): { resourceArn: string; priority?: number }[] {
+    const references: { resourceArn: string; priority?: number }[] = [];
+    const prefix = 'managed-rulegroup:';
+    // Check if the rule name starts with "managed-rulegroup:"
+    for (const reference of ruleGroupReferences) {
+      if (!managedRuleGroupMap.get(reference.name)) {
+        this.stack.addLogs(LogLevel.ERROR, `Managed stateful rule group ${reference.name} not found in managed rule map`);
+        throw new Error(`Configuration validation failed at runtime.`);
+      }
+     if (reference.name.startsWith(prefix)) {
+      // Extract the suffix after 'managed-rulegroup:'
+      const managedRuleGroupName = reference.name.slice(prefix.length);
+
+      // Create the managed rule group ARN
+      const accountId = this.stack.of(this).account;
+      const resourceArn = `arn:${cdk.Aws.PARTITION}:network-firewall:${cdk.Aws.REGION}:aws-managed:stateful-rulegroup/${managedRuleGroupName}`;
+      // Add the managed rule group ARN to the references array
+      references.push({ 
+        resourceArn: resourceArn,
+        priority: reference.priority
+      });
     }
     return references;
   }
