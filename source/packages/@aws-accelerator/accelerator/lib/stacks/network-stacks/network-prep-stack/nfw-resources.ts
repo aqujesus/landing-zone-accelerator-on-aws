@@ -298,7 +298,6 @@ export class NfwResources {
       const managedRuleGroupName = reference.name.slice(prefix.length);
 
       // Create the managed rule group ARN
-      const accountId = this.stack.of(this).account;
       const resourceArn = `arn:${cdk.Aws.PARTITION}:network-firewall:${cdk.Aws.REGION}:aws-managed:stateful-rulegroup/${managedRuleGroupName}`;
       // Add the managed rule group ARN to the references array
       references.push({ 
@@ -306,6 +305,7 @@ export class NfwResources {
         priority: reference.priority
       });
     }
+  }
     return references;
   }
 
