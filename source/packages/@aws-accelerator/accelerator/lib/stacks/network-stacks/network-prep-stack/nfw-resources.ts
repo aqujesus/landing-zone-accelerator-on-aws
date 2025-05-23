@@ -220,8 +220,8 @@ export class NfwResources {
             statefulEngineOptions: policyItem.firewallPolicy.statefulEngineOptions,
             statefulRuleGroupReferences: policyItem.firewallPolicy.statefulRuleGroups
               ? [
-                  ...this.getStatefulRuleGroupReferences(policyItem.firewallPolicy.statefulRuleGroups, ruleGroupMap),
-                  ...this.getStatefulRuleGroupReferencesForManagedPolicies(policyItem.firewallPolicy.statefulRuleGroups, managedRuleGroupMap)
+                  this.getStatefulRuleGroupReferences(policyItem.firewallPolicy.statefulRuleGroups, ruleGroupMap),
+                  this.getStatefulRuleGroupReferencesForManagedPolicies(policyItem.firewallPolicy.statefulRuleGroups, managedRuleGroupMap)
                 ]
               : [],
             statelessCustomActions: policyItem.firewallPolicy.statelessCustomActions,
@@ -241,6 +241,10 @@ export class NfwResources {
             stringValue: policy.policyArn,
           });
 
+          firewallPolicy.statefulRuleGroupReferences.forEach((value, key) => {
+            this.stack.addLogs(LogLevel.WARN, `WARN statefulRuleGroupReferences: ${key}, ${value}`);
+          });
+
           if (policyItem.shareTargets) {
             this.stack.addLogs(LogLevel.INFO, `Share Network Firewall policy ${policyItem.name}`);
             this.stack.addResourceShare(policyItem, `${policyItem.name}_NetworkFirewallPolicyShare`, [
@@ -251,6 +255,7 @@ export class NfwResources {
         policyMap.set(policyItem.name, policy.policyArn);
       }
     }
+
     policyMap.forEach((value, key) => {
       this.stack.addLogs(LogLevel.WARN, `WARN PolicyMap: ${key}, ${value}`);
     });
