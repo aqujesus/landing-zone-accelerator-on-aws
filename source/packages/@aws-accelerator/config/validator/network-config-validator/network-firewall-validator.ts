@@ -1103,10 +1103,15 @@ export class NetworkFirewallValidator {
     errors: string[],
   ) {
     const priorities: string[] = [];
+    const ManagedPolicies: string[] = [];
     const statefulRuleGroups = policy.firewallPolicy.statefulRuleGroups!;
     statefulRuleGroups.forEach(reference => {
       if (reference.priority) {
         priorities.push(reference.priority.toString());
+      }
+
+      if (reference.name.includes('Action')) {
+        ManagedPolicies.push(reference.name);
       }
     });
 
@@ -1118,7 +1123,14 @@ export class NetworkFirewallValidator {
           `[Network Firewall policy ${policy.name}]: STRICT_ORDER must be set for statefulEngineOptions property if defining rule group priority values`,
         );
       }
-      // Validate all rule groups have a prioity set
+
+    if (ManagedPolicies.length > 0 && strictOrder) {
+      // If Managed policies are defined as actions, strict order must be set
+      errors.push(
+          `[Managed Network Firewall policy ${policy.name}]: uses Action, and statefulEngineOptions is defined as STRICT_ORDER. Use the Strict version of the managed policy`,
+      );
+      }
+      // Validate all rule groups have a priority set
       if (strictOrder && statefulRuleGroups.length > priorities.length) {
         errors.push(
           `[Network Firewall policy ${policy.name}]: priority values must be set for each rule group when defining a STRICT_ORDER policy`,
@@ -1154,14 +1166,15 @@ export class NetworkFirewallValidator {
     groupType: 'STATEFUL' | 'STATELESS',
     errors: string[],
   ) {
+    const ruleGroupPrefix = 'managed-rulegroup:'
     for (const name of policyNames) {
       const group = allRules.get(name);
       // Validate rule group exists
-      if (!group) {
+      if (!group && !name.startsWith(ruleGroupPrefix)) { {
         errors.push(`[Network Firewall policy ${policy.name}]: rule group "${name}" does not exist`);
       }
 
-      if (group) {
+      if (group && !name.startsWith(ruleGroupPrefix)) {
         // Validate regions match
         const regionMismatch = policy.regions.some(region => !group.regions.includes(region));
         if (regionMismatch) {
