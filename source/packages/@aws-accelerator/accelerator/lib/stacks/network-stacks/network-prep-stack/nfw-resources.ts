@@ -297,10 +297,6 @@ export class NfwResources {
     // Check if the rule name starts with "managed-rulegroup:"
     for (const reference of ruleGroupReferences) {
       if (reference.name.startsWith(ruleGroupPrefix)) {
-        if (!managedRuleGroupMap.get(reference.name)) {
-          this.stack.addLogs(LogLevel.ERROR, `Managed stateful rule group ${reference.name} not found in managed rule map`);
-          throw new Error(`Configuration validation failed at runtime.`);
-        }
         const managedRuleGroupName = reference.name.slice(ruleGroupPrefix.length);
 
         // Create the managed rule group ARN
