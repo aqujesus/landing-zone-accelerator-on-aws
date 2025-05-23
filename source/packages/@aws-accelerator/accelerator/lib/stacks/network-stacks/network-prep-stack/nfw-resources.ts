@@ -289,11 +289,15 @@ export class NfwResources {
   ): { resourceArn: string; priority?: number }[] {
     const references: { resourceArn: string; priority?: number }[] = [];
     const ruleGroupPrefix = 'managed-rulegroup:';
+
+    managedRuleGroupMap.forEach((value, key) => {
+      this.stack.addLogs(LogLevel.ERROR, `ERROR managed rule: ${key}, ${value}`);
+    });
+    
     // Check if the rule name starts with "managed-rulegroup:"
     for (const reference of ruleGroupReferences) {
       if (reference.name.startsWith(ruleGroupPrefix)) {
         if (!managedRuleGroupMap.get(reference.name)) {
-          this.stack.addLogs(LogLevel.ERROR, `ERROR managed rule: ${Object.fromEntries(managedRuleGroupMap)}`);
           this.stack.addLogs(LogLevel.ERROR, `Managed stateful rule group ${reference.name} not found in managed rule map`);
           throw new Error(`Configuration validation failed at runtime.`);
         }
