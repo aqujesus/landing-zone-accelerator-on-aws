@@ -296,6 +296,7 @@ export class NfwResources {
     
     // Check if the rule name starts with "managed-rulegroup:"
     for (const reference of ruleGroupReferences) {
+      this.stack.addLogs(LogLevel.ERROR, `ERROR managed rule: ${reference.name}, ${reference.priority}`);
       if (reference.name.startsWith(ruleGroupPrefix)) {
         const managedRuleGroupName = reference.name.slice(ruleGroupPrefix.length);
 
