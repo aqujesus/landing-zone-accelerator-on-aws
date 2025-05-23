@@ -1170,7 +1170,7 @@ export class NetworkFirewallValidator {
     for (const name of policyNames) {
       const group = allRules.get(name);
       // Validate rule group exists
-      if (!group && !name.startsWith(ruleGroupPrefix)) { {
+      if (!group && !name.startsWith(ruleGroupPrefix)) {
         errors.push(`[Network Firewall policy ${policy.name}]: rule group "${name}" does not exist`);
       }
 
