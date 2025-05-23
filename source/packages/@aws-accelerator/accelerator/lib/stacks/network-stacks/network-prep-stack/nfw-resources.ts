@@ -280,6 +280,7 @@ export class NfwResources {
         this.stack.addLogs(LogLevel.ERROR, `Stateful rule group ${reference.name} not found in rule map`);
         throw new Error(`Configuration validation failed at runtime.`);
       }
+      // Exclude managed rule groups from the references
       if (!reference.name.startsWith(ruleGroupPrefix)) {
         references.push({ resourceArn: ruleGroupMap.get(reference.name)!, priority: reference.priority });
       }
