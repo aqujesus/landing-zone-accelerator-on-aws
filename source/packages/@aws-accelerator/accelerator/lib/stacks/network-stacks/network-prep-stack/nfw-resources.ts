@@ -241,10 +241,6 @@ export class NfwResources {
             stringValue: policy.policyArn,
           });
 
-          firewallPolicy.statefulRuleGroupReferences.forEach((value, key) => {
-            this.stack.addLogs(LogLevel.WARN, `WARN statefulRuleGroupReferences: ${key}, ${JSON.stringify(value)}`);
-          });
-
           if (policyItem.shareTargets) {
             this.stack.addLogs(LogLevel.INFO, `Share Network Firewall policy ${policyItem.name}`);
             this.stack.addResourceShare(policyItem, `${policyItem.name}_NetworkFirewallPolicyShare`, [
@@ -256,9 +252,6 @@ export class NfwResources {
       }
     }
 
-    policyMap.forEach((value, key) => {
-      this.stack.addLogs(LogLevel.WARN, `WARN PolicyMap: ${key}, ${value}`);
-    });
     return policyMap;
   }
 
@@ -302,12 +295,12 @@ export class NfwResources {
     const ruleGroupPrefix = 'managed-rulegroup:';
 
     managedRuleGroupMap.forEach((value, key) => {
-      this.stack.addLogs(LogLevel.WARN, `WARN managed rule: ${key}, ${value}`);
+      this.stack.addLogs(LogLevel.WARN, `WARN Detected managed rule: ${key}, ${value}`);
     });
     
     // Check if the rule name starts with "managed-rulegroup:"
     for (const reference of ruleGroupReferences) {
-      this.stack.addLogs(LogLevel.WARN, `WARN managed rule: ${reference.name}, ${reference.priority}`);
+      // If the rule name starts with "managed-rulegroup:", generate the managed rule group ARN
       if (reference.name.startsWith(ruleGroupPrefix)) {
         const managedRuleGroupName = reference.name.slice(ruleGroupPrefix.length);
 
@@ -320,7 +313,6 @@ export class NfwResources {
       });
     }
   }
-    this.stack.addLogs(LogLevel.WARN, `WARN references: ${JSON.stringify(references)}`);
 
     return references;
   }
