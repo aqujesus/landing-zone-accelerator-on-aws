@@ -291,12 +291,12 @@ export class NfwResources {
     const ruleGroupPrefix = 'managed-rulegroup:';
 
     managedRuleGroupMap.forEach((value, key) => {
-      this.stack.addLogs(LogLevel.ERROR, `ERROR managed rule: ${key}, ${value}`);
+      this.stack.addLogs(LogLevel.WARN, `WARN managed rule: ${key}, ${value}`);
     });
     
     // Check if the rule name starts with "managed-rulegroup:"
     for (const reference of ruleGroupReferences) {
-      this.stack.addLogs(LogLevel.ERROR, `ERROR managed rule: ${reference.name}, ${reference.priority}`);
+      this.stack.addLogs(LogLevel.WARN, `WARN managed rule: ${reference.name}, ${reference.priority}`);
       if (reference.name.startsWith(ruleGroupPrefix)) {
         const managedRuleGroupName = reference.name.slice(ruleGroupPrefix.length);
 
@@ -309,6 +309,9 @@ export class NfwResources {
       });
     }
   }
+    references.forEach((value) => {
+      this.stack.addLogs(LogLevel.WARN, `WARN references rule: ${value}`);
+    });
     return references;
   }
 
