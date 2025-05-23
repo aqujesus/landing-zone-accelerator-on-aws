@@ -109,9 +109,10 @@ export class NfwResources {
             this.stack.addResourceShare(ruleItem, `${ruleItem.name}_NetworkFirewallRuleGroupShare`, [rule.groupArn]);
           }
         }
-
+      
+      const ruleGroupPrefix = 'managed-rulegroup:';
       // Check if the rule name starts with "managed-rulegroup:" and add to appropriate map
-      if (ruleItem.name.startsWith('managed-rulegroup:')) {
+      if (ruleItem.name.startsWith(ruleGroupPrefix)) {
         managedRuleGroupMap.set(ruleItem.name, rule.groupArn);
       } else {
         ruleGroupMap.set(ruleItem.name, rule.groupArn);
@@ -286,16 +287,16 @@ export class NfwResources {
     managedRuleGroupMap: Map<string, string>,
   ): { resourceArn: string; priority?: number }[] {
     const references: { resourceArn: string; priority?: number }[] = [];
-    const prefix = 'managed-rulegroup:';
+    const ruleGroupPrefix = 'managed-rulegroup:';
     // Check if the rule name starts with "managed-rulegroup:"
     for (const reference of ruleGroupReferences) {
       if (!managedRuleGroupMap.get(reference.name)) {
         this.stack.addLogs(LogLevel.ERROR, `Managed stateful rule group ${reference.name} not found in managed rule map`);
         throw new Error(`Configuration validation failed at runtime.`);
       }
-     if (reference.name.startsWith(prefix)) {
+     if (reference.name.startsWith(ruleGroupPrefix)) {
       // Extract the suffix after 'managed-rulegroup:'
-      const managedRuleGroupName = reference.name.slice(prefix.length);
+      const managedRuleGroupName = reference.name.slice(ruleGroupPrefix.length);
 
       // Create the managed rule group ARN
       const resourceArn = `arn:${cdk.Aws.PARTITION}:network-firewall:${cdk.Aws.REGION}:aws-managed:stateful-rulegroup/${managedRuleGroupName}`;
