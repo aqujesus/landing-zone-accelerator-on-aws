@@ -220,8 +220,8 @@ export class NfwResources {
             statefulEngineOptions: policyItem.firewallPolicy.statefulEngineOptions,
             statefulRuleGroupReferences: policyItem.firewallPolicy.statefulRuleGroups
               ? [
-                  this.getStatefulRuleGroupReferences(policyItem.firewallPolicy.statefulRuleGroups, ruleGroupMap),
-                  this.getStatefulRuleGroupReferencesForManagedPolicies(policyItem.firewallPolicy.statefulRuleGroups, managedRuleGroupMap)
+                  ...this.getStatefulRuleGroupReferences(policyItem.firewallPolicy.statefulRuleGroups, ruleGroupMap),
+                  ...this.getStatefulRuleGroupReferencesForManagedPolicies(policyItem.firewallPolicy.statefulRuleGroups, managedRuleGroupMap)
                 ]
               : [],
             statelessCustomActions: policyItem.firewallPolicy.statelessCustomActions,
