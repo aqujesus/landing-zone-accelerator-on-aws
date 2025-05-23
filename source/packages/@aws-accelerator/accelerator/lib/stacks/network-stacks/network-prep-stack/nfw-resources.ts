@@ -309,8 +309,8 @@ export class NfwResources {
       });
     }
   }
-    references.forEach((value) => {
-      this.stack.addLogs(LogLevel.WARN, `WARN references rule: ${value}`);
+    references.forEach((key, value) => {
+      this.stack.addLogs(LogLevel.WARN, `WARN references rule: ${key} ${value}`);
     });
     return references;
   }
